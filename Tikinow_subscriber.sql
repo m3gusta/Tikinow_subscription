@@ -1,5 +1,5 @@
 #standardSQL
--- Weekly version, Not fix 0x
+-- Weekly version, Not fix 0x.
 WITH raw_data AS (
   SELECT 
     iosyearweek, 
