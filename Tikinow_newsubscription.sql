@@ -1,5 +1,5 @@
 #standardSQL
--- Weekly data, not edit 0x
+-- Weekly data, not edit 0x, New sub include Real new sub and return sub
 WITH 
 new_subscription AS (
     SELECT DISTINCT 
