@@ -10,11 +10,11 @@
 function yesterday_data() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var yesterday = ss.getSheetByName("Current_date");
-  var RangeYesterday = yesterday.getRange('A1:B23').getValues();
+  var RangeYesterday = yesterday.getRange('A1:B31').getValues();
   /* var LastRow = yesterday.getRange("A14").getValues() */
   var reported_date = yesterday.getRange('E2').getValues();
   var string = reported_date +" \n "// + "%0D%0A"
-  for (var i = 0;i <= 22; i++){
+  for (var i = 0;i <= 30; i++){
     string += RangeYesterday[i][0] + ": " + RangeYesterday[i][1] +" \n " ; 
   }
   Logger.log(string)
