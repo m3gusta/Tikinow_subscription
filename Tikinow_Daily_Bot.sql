@@ -1,5 +1,7 @@
 #standardSQL
 
+#standardSQL
+
 With 
 FTJD as(
 select 
@@ -296,6 +298,56 @@ sum(total) as orders
 from final2
 where ontime = 1
 -- group by ontime
+),
+
+TNEXP as(
+select
+  'F1_TN expiration' as Metrics,
+  count(distinct customer_id) as Number_of_expired_subscriber
+from `ecom.customer_subscription` 
+where id in (select tikinow_id from `ecom.customer_free_trial_registration` )
+and date(end_date,'+7') = date_sub(current_date('+7'), interval 1 day)
+-- and date(end_date,'+7') <= current_date('+7')
+group by 1
+order by 1 desc
+),
+-- # Number of retention subscribers
+
+all_FT_subs as(
+select
+  t1.customer_id,
+  t1.tikinow_id,
+  t1.created_at,
+  t1.id as free_trial_id,
+  t2.id as id2,
+  t2.customer_id as cus2,
+  t2.start_date,
+  t2.end_date,
+  t2.status
+from `ecom.customer_free_trial_registration` t1
+left join `ecom.customer_subscription` t2 on t1.customer_id = t2.customer_id
+where tikinow_id <= t2.id
+order by customer_id, created_at 
+),
+
+Renewal_id as(
+select
+  id2
+from all_FT_subs 
+where id2 not in (select tikinow_id from `ecom.customer_free_trial_registration`)
+),
+
+TNRENEWAL as(
+select
+  'F2_TN renewal' as Metrics,
+  count(distinct customer_id) as number_of_subscribers
+--   *, timestamp_diff(end_date,start_date, day) as num
+from `ecom.customer_subscription` where id in (select id2 from Renewal_id) 
+and status = 1
+-- and timestamp_diff(end_date,start_date, day) = 60
+and date(created_at,'+7') = date_sub(current_date('+7'), interval 1 day)
+group by 1
+order by 1
 )
 
 
@@ -319,4 +371,6 @@ union all select * from TNDDDN
 union all select * from TNDDCT
 union all select * from TNDDHP
 union all select * from TNDDNT
+union all select * from TNEXP
+union all select * from TNRENEWAL
 order by Metrics ASC
