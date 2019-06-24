@@ -300,9 +300,12 @@ where ontime = 1
 -- group by ontime
 ),
 
+
+#PART2 
+
 TNEXP as(
 select
-  'F1_TN expiration' as Metrics,
+  'F1_TN expiration (daily)' as Metrics,
   count(distinct customer_id) as Number_of_expired_subscriber
 from `ecom.customer_subscription` 
 where id in (select tikinow_id from `ecom.customer_free_trial_registration` )
@@ -323,7 +326,8 @@ select
   t2.customer_id as cus2,
   t2.start_date,
   t2.end_date,
-  t2.status
+  t2.status,
+  t1.payment_method
 from `ecom.customer_free_trial_registration` t1
 left join `ecom.customer_subscription` t2 on t1.customer_id = t2.customer_id
 where tikinow_id <= t2.id
@@ -337,9 +341,9 @@ from all_FT_subs
 where id2 not in (select tikinow_id from `ecom.customer_free_trial_registration`)
 ),
 
-TNRENEWAL as(
+TNRENEWALA as(
 select
-  'F2_TN renewal' as Metrics,
+  'F2.0_TN renewal (daily)' as Metrics,
   count(distinct customer_id) as number_of_subscribers
 --   *, timestamp_diff(end_date,start_date, day) as num
 from `ecom.customer_subscription` where id in (select id2 from Renewal_id) 
@@ -348,6 +352,125 @@ and status = 1
 and date(created_at,'+7') = date_sub(current_date('+7'), interval 1 day)
 group by 1
 order by 1
+),
+
+# CC
+Renewal_id_CC as(
+select
+  id2
+from all_FT_subs 
+where id2 not in (select tikinow_id from `ecom.customer_free_trial_registration`)
+and payment_method = 'cybersource'
+),
+
+TNRENEWALCC as(
+select
+  'F2.1_TN renewal_CC (daily)' as Metrics,
+  count(distinct customer_id) as number_of_subscribers
+--   *, timestamp_diff(end_date,start_date, day) as num
+from `ecom.customer_subscription` where id in (select id2 from Renewal_id_CC) 
+and status = 1
+-- and timestamp_diff(end_date,start_date, day) = 60
+and date(created_at,'+7') = date_sub(current_date('+7'), interval 1 day)
+-- group by 1
+-- order by 1
+),
+
+#NCC
+Renewal_id_NCC as(
+select
+  id2
+from all_FT_subs 
+where id2 not in (select tikinow_id from `ecom.customer_free_trial_registration`)
+and payment_method != 'cybersource'
+),
+
+TNRENEWALNCC as(
+select
+  'F2.2_TN renewal_NCC (daily)' as Metrics,
+  count(distinct customer_id) as number_of_subscribers
+--   *, timestamp_diff(end_date,start_date, day) as num
+from `ecom.customer_subscription` where id in (select id2 from Renewal_id_NCC) 
+and status = 1
+-- and timestamp_diff(end_date,start_date, day) = 60
+and date(created_at,'+7') = date_sub(current_date('+7'), interval 1 day)
+-- group by 1
+-- order by 1
+),
+
+TNEXPTOTAL as(
+select
+  'F3.0_TN expiration (total)' as Metrics,
+  count(distinct customer_id) as Number_of_expired_subscriber
+from `ecom.customer_subscription` 
+where id in (select tikinow_id from `ecom.customer_free_trial_registration` )
+-- and date(end_date,'+7') = date_sub(current_date('+7'), interval 1 day)
+and date(end_date,'+7') < current_date('+7')
+-- group by 1
+-- order by 1 desc
+),
+
+TNEXPTOTALCC as(
+select
+  'F3.1_TN expiration_CC (total)' as Metrics,
+  count(distinct customer_id) as Number_of_expired_subscriber
+from `ecom.customer_subscription` 
+where id in (select tikinow_id from `ecom.customer_free_trial_registration` where payment_method = 'cybersource' )
+-- and date(end_date,'+7') = date_sub(current_date('+7'), interval 1 day)
+and date(end_date,'+7') < current_date('+7')
+-- group by 1
+-- order by 1 desc
+),
+
+TNEXPTOTALNCC as(
+select
+  'F3.2_TN expiration_NCC (total)' as Metrics,
+  count(distinct customer_id) as Number_of_expired_subscriber
+from `ecom.customer_subscription` 
+where id in (select tikinow_id from `ecom.customer_free_trial_registration` where payment_method != 'cybersource')
+-- and date(end_date,'+7') = date_sub(current_date('+7'), interval 1 day)
+and date(end_date,'+7') < current_date('+7')
+-- group by 1
+-- order by 1 desc
+),
+
+TNRENEWALTOTALA as(
+select
+  'F4.0_TN renewal (total)' as Metrics,
+  count(distinct customer_id) as number_of_subscribers
+--   *, timestamp_diff(end_date,start_date, day) as num
+from `ecom.customer_subscription` where id in (select id2 from Renewal_id) 
+and status = 1
+-- and timestamp_diff(end_date,start_date, day) = 60
+and date(created_at,'+7') < current_date('+7')
+-- group by 1
+-- order by 1
+),
+
+TNRENEWALTOTALCC as(
+select
+  'F4.1_TN renewal_CC' as Metrics,
+  count(distinct customer_id) as number_of_subscribers
+--   *, timestamp_diff(end_date,start_date, day) as num
+from `ecom.customer_subscription` where id in (select id2 from Renewal_id_CC) 
+and status = 1
+-- and timestamp_diff(end_date,start_date, day) = 60
+and date(created_at,'+7') < current_date('+7')
+-- group by 1
+-- order by 1
+),
+
+TNRENEWALTOTALNCC as(
+select
+  'F4.2_TN renewal_NCC' as Metrics,
+  count(distinct customer_id) as number_of_subscribers
+--   *, timestamp_diff(end_date,start_date, day) as num
+from `ecom.customer_subscription` where id in (select id2 from Renewal_id_NCC) 
+and status = 1
+-- and timestamp_diff(end_date,start_date, day) = 60
+and date(created_at,'+7') < current_date('+7')
+-- group by 1
+-- order by 1
 )
 
 
@@ -372,5 +495,13 @@ union all select * from TNDDCT
 union all select * from TNDDHP
 union all select * from TNDDNT
 union all select * from TNEXP
-union all select * from TNRENEWAL
+union all select * from TNRENEWALA
+union all select * from TNRENEWALCC
+union all select * from TNRENEWALNCC
+union all select * from TNEXPTOTAL
+union all select * from TNEXPTOTALCC
+union all select * from TNEXPTOTALNCC
+union all select * from TNRENEWALTOTALA
+union all select * from TNRENEWALTOTALCC
+union all select * from TNRENEWALTOTALNCC
 order by Metrics ASC
