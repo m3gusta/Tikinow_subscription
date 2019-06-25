@@ -301,11 +301,11 @@ where ontime = 1
 ),
 
 
-#PART2 
+#---------------------------------------------------------------PART2--------------------------------------------------------------------------# 
 
 TNEXP as(
 select
-  'F1_TN expiration (daily)' as Metrics,
+  'F1.0_TN expiration (daily)' as Metrics,
   count(distinct customer_id) as Number_of_expired_subscriber
 from `ecom.customer_subscription` 
 where id in (select tikinow_id from `ecom.customer_free_trial_registration` )
@@ -314,6 +314,31 @@ and date(end_date,'+7') = date_sub(current_date('+7'), interval 1 day)
 group by 1
 order by 1 desc
 ),
+
+TNEXPCC as(
+select
+  'F1.1_TN expiration_CC (daily)' as Metrics,
+  count(distinct customer_id) as Number_of_expired_subscriber
+from `ecom.customer_subscription` 
+where id in (select tikinow_id from `ecom.customer_free_trial_registration` where payment_method = 'cybersource')
+and date(end_date,'+7') = date_sub(current_date('+7'), interval 1 day)
+-- and date(end_date,'+7') <= current_date('+7')
+group by 1
+order by 1 desc
+),
+
+TNEXPNCC as(
+select
+  'F1.2_TN expiration_NCC (daily)' as Metrics,
+  count(distinct customer_id) as Number_of_expired_subscriber
+from `ecom.customer_subscription` 
+where id in (select tikinow_id from `ecom.customer_free_trial_registration` where payment_method != 'cybersource')
+and date(end_date,'+7') = date_sub(current_date('+7'), interval 1 day)
+-- and date(end_date,'+7') <= current_date('+7')
+group by 1
+order by 1 desc
+),
+
 -- # Number of retention subscribers
 
 all_FT_subs as(
@@ -495,6 +520,8 @@ union all select * from TNDDCT
 union all select * from TNDDHP
 union all select * from TNDDNT
 union all select * from TNEXP
+union all select * from TNEXPCC
+union all select * from TNEXPNCC
 union all select * from TNRENEWALA
 union all select * from TNRENEWALCC
 union all select * from TNRENEWALNCC
