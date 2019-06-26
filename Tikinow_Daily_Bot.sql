@@ -1,7 +1,5 @@
 #standardSQL
 
-#standardSQL
-
 With 
 FTJD as(
 select 
