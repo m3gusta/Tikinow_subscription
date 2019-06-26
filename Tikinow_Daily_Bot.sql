@@ -1,7 +1,5 @@
 #standardSQL
 
-#standardSQL
-
 With 
 FTJD as(
 select 
@@ -496,7 +494,24 @@ and status = 1
 and date(created_at,'+7') < current_date('+7')
 -- group by 1
 -- order by 1
+),
+
+TNREMINDD as(
+select 
+  'G1.0_TN Remind_Daily' as Metrics,
+  count(distinct customer_id) as number
+from `ecom.customer_tikinow_renewal_reminder` 
+where date(popup_last_reminded_at,'+7') = date_sub(current_date('+7'), interval 1 day)
+),
+
+TNREMINDALL as(
+select
+  'G1.1_TN Remind_Total' as Metrics,
+  count(distinct customer_id) as number
+from `ecom.customer_tikinow_renewal_reminder` 
+where date(popup_last_reminded_at,'+7') <= date_sub(current_date('+7'), interval 1 day)
 )
+
 
 
 select * from FTJD
@@ -531,4 +546,6 @@ union all select * from TNEXPTOTALNCC
 union all select * from TNRENEWALTOTALA
 union all select * from TNRENEWALTOTALCC
 union all select * from TNRENEWALTOTALNCC
+union all select * from TNREMINDD
+union all select * from TNREMINDALL
 order by Metrics ASC
