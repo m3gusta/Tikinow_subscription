@@ -301,11 +301,11 @@ where ontime = 1
 ),
 
 
-#PART2 
+#---------------------------------------------------------------PART2--------------------------------------------------------------------------# 
 
 TNEXP as(
 select
-  'F1_TN expiration (daily)' as Metrics,
+  'F1.0_TN expiration (daily)' as Metrics,
   count(distinct customer_id) as Number_of_expired_subscriber
 from `ecom.customer_subscription` 
 where id in (select tikinow_id from `ecom.customer_free_trial_registration` )
@@ -314,6 +314,31 @@ and date(end_date,'+7') = date_sub(current_date('+7'), interval 1 day)
 group by 1
 order by 1 desc
 ),
+
+TNEXPCC as(
+select
+  'F1.1_TN expiration_CC (daily)' as Metrics,
+  count(distinct customer_id) as Number_of_expired_subscriber
+from `ecom.customer_subscription` 
+where id in (select tikinow_id from `ecom.customer_free_trial_registration` where payment_method = 'cybersource')
+and date(end_date,'+7') = date_sub(current_date('+7'), interval 1 day)
+-- and date(end_date,'+7') <= current_date('+7')
+group by 1
+order by 1 desc
+),
+
+TNEXPNCC as(
+select
+  'F1.2_TN expiration_NCC (daily)' as Metrics,
+  count(distinct customer_id) as Number_of_expired_subscriber
+from `ecom.customer_subscription` 
+where id in (select tikinow_id from `ecom.customer_free_trial_registration` where payment_method != 'cybersource')
+and date(end_date,'+7') = date_sub(current_date('+7'), interval 1 day)
+-- and date(end_date,'+7') <= current_date('+7')
+group by 1
+order by 1 desc
+),
+
 -- # Number of retention subscribers
 
 all_FT_subs as(
@@ -471,7 +496,24 @@ and status = 1
 and date(created_at,'+7') < current_date('+7')
 -- group by 1
 -- order by 1
+),
+
+TNREMINDD as(
+select 
+  'G1.0_TN Remind_Daily' as Metrics,
+  count(distinct customer_id) as number
+from `ecom.customer_tikinow_renewal_reminder` 
+where date(popup_last_reminded_at,'+7') = date_sub(current_date('+7'), interval 1 day)
+),
+
+TNREMINDALL as(
+select
+  'G1.1_TN Remind_Total' as Metrics,
+  count(distinct customer_id) as number
+from `ecom.customer_tikinow_renewal_reminder` 
+where date(popup_last_reminded_at,'+7') <= date_sub(current_date('+7'), interval 1 day)
 )
+
 
 
 select * from FTJD
@@ -495,6 +537,8 @@ union all select * from TNDDCT
 union all select * from TNDDHP
 union all select * from TNDDNT
 union all select * from TNEXP
+union all select * from TNEXPCC
+union all select * from TNEXPNCC
 union all select * from TNRENEWALA
 union all select * from TNRENEWALCC
 union all select * from TNRENEWALNCC
@@ -504,4 +548,6 @@ union all select * from TNEXPTOTALNCC
 union all select * from TNRENEWALTOTALA
 union all select * from TNRENEWALTOTALCC
 union all select * from TNRENEWALTOTALNCC
+union all select * from TNREMINDD
+union all select * from TNREMINDALL
 order by Metrics ASC
